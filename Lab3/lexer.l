@@ -16,7 +16,6 @@
     #include <string>
 
     #ifdef ONLY_FOR_LEX
-    #include <iostream>
     #include <ostream>
     #include <fstream>
     #include <sstream>
@@ -29,6 +28,7 @@
     int offset;
     std::string tab="\t";
     std::string comment="";
+    int commentLineno=0,commentOffset=0;
     enum TOKENTYPE
     {
         INT,FLOAT,VOID,NUMBER,ID,IF,ELSE,WHILE,BREAK,CONTINUE,RETURN, 
@@ -102,9 +102,9 @@
             {
                 tail=0;
                 curScope=-1;
-                forwardScope();
+                scopeForward();
             }
-            void forwardScope()
+            void scopeForward()
             {
                 ScopeTable *scopeTable=new ScopeTable();
                 scopeTables[tail]=*scopeTable;
@@ -113,7 +113,7 @@
                 curScope=tail;
                 ++tail;    
             }
-            void backScope()
+            void scopeBackward()
             {
                 curScope=scopeTables[curScope].getParentScope();
             }
@@ -135,6 +135,13 @@
         + "\n";
         fputs(DEBUG_INFO.c_str(), yyout);
     }
+    void DEBUG_FOR_LAB4(std::string s,int mylineno,int myoffset){
+        std::string DEBUG_INFO = "[DEBUG LAB4]: \t" + s 
+        + "\t" + to_string((long long)mylineno) 
+        + "\t" + to_string((long long)myoffset) 
+        + "\n";
+        fputs(DEBUG_INFO.c_str(), yyout);
+    }
     #endif
 %}
 
@@ -143,24 +150,62 @@ BLOCKCOMMENTELEMENT .|\n
 BLOCKCOMMENTEND "*/"
 LINECOMMENT  \/\/[^\n]*
 DECIMIAL ([1-9][0-9]*|0)
-OCTAL (0[1-7][0-7]*|0)
-HEXADECIMAL (0(x|X)[1-9a-fA-F][0-9a-fA-F]*|0)
+OCTAL (0([1-7][0-7]*|0))
+HEXADECIMAL (0(x|X)([1-9a-fA-F][0-9a-fA-F]*|0))
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 EOL (\r\n|\n|\r)
 WHITE [\t ]
 %x BLOCKCOMMENT
 %%
-{BLOCKCOMMENTBEGIN} {BEGIN BLOCKCOMMENT;comment="";}
-<BLOCKCOMMENT>{BLOCKCOMMENTELEMENT} {string yycontext(yytext);comment+=yycontext;}
-<BLOCKCOMMENT>{BLOCKCOMMENTEND} {DEBUG_FOR_LAB4(comment);BEGIN INITIAL;}
+{BLOCKCOMMENTBEGIN} {
+    #ifdef ONLY_FOR_LEX
+        BEGIN BLOCKCOMMENT;
+        comment="";
+        offset+=2;
+        commentLineno=yylineno;
+        commentOffset=offset;
+    #else
+        return BLOCKCOMMENTBEGIN;
+    #endif
+}
+<BLOCKCOMMENT>{BLOCKCOMMENTELEMENT} {
+    #ifdef ONLY_FOR_LEX
+        string yycontext(yytext);
+        comment+=yycontext;
+        if(!strcmp(yytext,"\n"))
+        {
+            yylineno++;
+            offset=0;
+        }
+        else
+        {
+            offset+=strlen(yytext);
+        }
+    #else
+        return BLOCKCOMMENTELEMENT;
+    #endif
+}
+<BLOCKCOMMENT>{BLOCKCOMMENTEND} {
+    #ifdef ONLY_FOR_LEX
+        comment="BLOCKCOMMENT"+tab+comment;
+        DEBUG_FOR_LAB4(comment,commentLineno,commentOffset);
+        BEGIN INITIAL;
+        offset+=2;
+    #else
+        return BLOCKCOMMENTEND;
+    #endif
+}
 
 {LINECOMMENT} {
     #ifdef ONLY_FOR_LEX
         string yycontext(yytext);
         yycontext=yycontext.substr(2,yycontext.length()-2);
+        offset+=2;
+        yycontext="LINECOMMENT"+tab+yycontext;
         DEBUG_FOR_LAB4(yycontext);
+        offset+=yycontext.length();
     #else
-        return INT;
+        return LINECOMMENT;
     #endif
 }
 "int" {
@@ -399,7 +444,7 @@ WHITE [\t ]
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("LBRACE\t{");
         offset+=strlen(yytext);
-        symbolTable->forwardScope();
+        symbolTable->scopeForward();
     #else
         return LBRACE;
     #endif
@@ -408,7 +453,7 @@ WHITE [\t ]
     #ifdef ONLY_FOR_LEX
         DEBUG_FOR_LAB4("RBRACE\t}");
         offset+=strlen(yytext);
-        symbolTable->backScope();
+        symbolTable->scopeBackward();
     #else
         return RBRACE;
     #endif
