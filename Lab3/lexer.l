@@ -149,6 +149,7 @@ BLOCKCOMMENTBEGIN "/*"
 BLOCKCOMMENTELEMENT .|\n
 BLOCKCOMMENTEND "*/"
 LINECOMMENT  \/\/[^\n]*
+FLOATDECIMIAL (([1-9][0-9]*|0).[0-9]+)
 DECIMIAL ([1-9][0-9]*|0)
 OCTAL (0([1-7][0-7]*|0))
 HEXADECIMAL (0(x|X)([1-9a-fA-F][0-9a-fA-F]*|0))
@@ -504,6 +505,16 @@ WHITE [\t ]
         offset+=strlen(yytext);
     #else
         return HEXADECIMAL;
+    #endif
+}
+{FLOATDECIMIAL} {
+    #ifdef ONLY_FOR_LEX
+        std::string yycontext(yytext);
+        std::string str="FLOATDECIMIAL"+tab+yycontext;
+        DEBUG_FOR_LAB4(str);
+        offset+=strlen(yytext);
+    #else
+        return FLOATDECIMIAL;
     #endif
 }
 {ID} {
