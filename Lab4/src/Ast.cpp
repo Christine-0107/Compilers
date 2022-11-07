@@ -297,6 +297,13 @@ void AssignStmt::output(int level)
     expr->output(level + 4);
 }
 
+Type* FuncParamNode::getType()
+{
+    if(id!=nullptr)
+        return id->getType();
+    return nullptr;
+}
+
 void FuncParamNode::output(int level)
 {
     fprintf(yyout, "%*cFuncParamNode\n", level, ' ');
@@ -307,6 +314,18 @@ void FuncParamNode::output(int level)
 void FuncParamSeqNode::insertParam(FuncParamNode *param)
 {
     paramList.push_back(param);
+}
+
+std::vector<Type*> FuncParamSeqNode::getParamsType()
+{
+    std::vector<Type*> paramType;
+    std::vector<FuncParamNode*>::iterator it;
+    for(it=paramList.begin();it!=paramList.end();++it)
+    {
+        if((*it)->getType()!=nullptr)
+            paramType.push_back((*it)->getType());
+    }
+    return paramType;
 }
 
 void FuncParamSeqNode::output(int level)

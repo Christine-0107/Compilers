@@ -535,11 +535,9 @@ FuncParam
         Type *type;
         if($1==TypeSystem::intType){
             type = new IntArrayType();
-            ((IntArrayType*)type)->addDim(-1);
         }
         else if($1==TypeSystem::floatType){
             type = new FloatArrayType();
-            ((FloatArrayType*)type)->addDim(-1);
         }
         SymbolEntry *se = new IdentifierSymbolEntry(type, $2, identifiers->getLevel());
         identifiers->install($2, se);
@@ -553,11 +551,9 @@ FuncParam
         Type *type;
         if($1==TypeSystem::intType){
             type = new IntArrayType();
-            ((IntArrayType*)type)->addDim(-1);
         }
         else if($1==TypeSystem::floatType){
             type = new FloatArrayType();
-            ((FloatArrayType*)type)->addDim(-1);
         }
         SymbolEntry *se = new IdentifierSymbolEntry(type, $2, identifiers->getLevel());
         identifiers->install($2, se);
@@ -634,9 +630,11 @@ FuncDef
     FuncParamList RPAREN BlockStmt
     {
         SymbolEntry *se;
-        se = identifiers->lookup($2);
-        FuncParamSeqNode *paramList=((FuncParamSeqNode*)$5);
+        se = identifiers->lookup($2); 
         assert(se != nullptr);
+        FuncParamSeqNode *paramList=((FuncParamSeqNode*)$5);
+        FunctionType *funcType=(FunctionType*)se->getType();
+        funcType->setParamsType(paramList->getParamsType());
         $$ = new FunctionDef(se, paramList, $7);
         SymbolTable *top = identifiers;
         identifiers = identifiers->getPrev();
@@ -664,8 +662,6 @@ ArrayLists
     }
     ;
 
-
-// TODO: 运行时库支持
  
 %%
 

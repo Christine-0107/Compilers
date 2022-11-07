@@ -46,25 +46,9 @@ std::string ConstFloatType::toStr()
     return "constant float";
 }
 
-void IntArrayType::addDim(int dim){
-    dims.push_back(dim);
-}
-
-std::vector<int> IntArrayType::getDim(){
-    return dims;
-}
-
 std::string IntArrayType::toStr()
 {
     return "int array";
-}
-
-void FloatArrayType::addDim(int dim){
-    dims.push_back(dim);
-}
-
-std::vector<int> FloatArrayType::getDim(){
-    return dims;
 }
 
 std::string FloatArrayType::toStr()
@@ -72,25 +56,9 @@ std::string FloatArrayType::toStr()
     return "float array";
 }
 
-void ConstIntArrayType::addDim(int dim){
-    dims.push_back(dim);
-}
-
-std::vector<int> ConstIntArrayType::getDim(){
-    return dims;
-}
-
 std::string ConstIntArrayType::toStr()
 {
     return "const int array";
-}
-
-void ConstFloatArrayType::addDim(int dim){
-    dims.push_back(dim);
-}
-
-std::vector<int> ConstFloatArrayType::getDim(){
-    return dims;
 }
 
 std::string ConstFloatArrayType::toStr()
@@ -98,9 +66,19 @@ std::string ConstFloatArrayType::toStr()
     return "const float array";
 }
 
+void FunctionType::setParamsType(std::vector<Type*> paramsType)
+{
+    this->paramsType=paramsType;
+}
+
 std::string FunctionType::toStr()
 {
     std::ostringstream buffer;
-    buffer << returnType->toStr() << "()";
+    buffer << returnType->toStr() ;
+    buffer << "(";
+    std::vector<Type*>::iterator it;
+    for(it=paramsType.begin();it!=paramsType.end();++it)
+        buffer << (*it)->toStr() << " ";
+    buffer << ")";
     return buffer.str();
 }

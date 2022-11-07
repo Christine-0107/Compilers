@@ -22,7 +22,7 @@ public:
     bool isFloatArray() const {return kind == FLOAT_ARRAY;};
     bool isConstIntArray() const {return kind == CONSTINT_ARRAY;};
     bool isConstFloatArray() const {return kind == CONSTFLOAT_ARRAY;};
-    bool isArray() const {return kind == INT_ARRAY || kind == FLOAT_ARRAY;};
+    bool isArray() const {return kind == INT_ARRAY || kind == FLOAT_ARRAY || kind == CONSTINT_ARRAY || kind == CONSTFLOAT_ARRAY;};
     bool isFunc() const {return kind == FUNC;};
 };
 
@@ -67,45 +67,29 @@ public:
 
 class IntArrayType : public Type
 {
-private:
-    std::vector<int> dims; 
 public:
     IntArrayType() : Type(Type::INT_ARRAY){};
-    void addDim(int dim);
-    std::vector<int> getDim();
     std::string toStr();
 };
 
 class FloatArrayType : public Type
 {
-private:
-    std::vector<int> dims; 
 public:
     FloatArrayType() : Type(Type::FLOAT_ARRAY){};
-    void addDim(int dim);
-    std::vector<int> getDim();
     std::string toStr();
 };
 
 class ConstIntArrayType : public Type
 {
-private:
-    std::vector<int> dims; 
 public:
     ConstIntArrayType() : Type(Type::CONSTINT_ARRAY){};
-    void addDim(int dim);
-    std::vector<int> getDim();
     std::string toStr();
 };
 
 class ConstFloatArrayType : public Type
 {
-private:
-    std::vector<int> dims; 
 public:
     ConstFloatArrayType() : Type(Type::CONSTFLOAT_ARRAY){};
-    void addDim(int dim);
-    std::vector<int> getDim();
     std::string toStr();
 };
 
@@ -117,6 +101,7 @@ private:
 public:
     FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
     Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
+    void setParamsType(std::vector<Type*> paramsType);
     std::string toStr();
 };
 

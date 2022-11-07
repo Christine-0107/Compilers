@@ -274,6 +274,7 @@ private:
     Id *id;
 public:
     FuncParamNode(Id *id) : id(id) {};
+    Type* getType();
     void output(int level);
 };
 
@@ -284,6 +285,7 @@ private:
 public:
     FuncParamSeqNode() {};
     void insertParam(FuncParamNode *param);
+    std::vector<Type*> getParamsType();
     void output(int level);
 };
 
