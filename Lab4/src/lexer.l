@@ -1,19 +1,10 @@
 %option noyywrap
 %{
-    /*
-    * You will need to comment this line in lab5.
-    */
-    //#define ONLY_FOR_LEX
-    
-    #ifdef ONLY_FOR_LEX
-    #else
-    #include "parser.h"
-    #endif
 
     #define YY_NO_UNPUT
     #define YY_NO_INPUT
 
-    #ifdef ONLY_FOR_LEX
+    #include "parser.h"
     #include <ostream>
     #include <fstream>
     #include <sstream>
@@ -23,13 +14,14 @@
     using namespace std;
     extern FILE *yyin; 
     extern FILE *yyout;
-    int offset;
+    extern bool dump_tokens;
+    int offset=0;
     std::string tab="\t";
     std::string comment="";
     int commentLineno=0,commentOffset=0;
     enum TOKENTYPE
     {
-        ID
+        IID
     };
     struct symbol
     {
@@ -85,7 +77,7 @@
             }
 
     }; 
-    class SymbolTable
+    class Lab4SymbolTable
     {
         private:
             //std::vector<ScopeTable> scopeTables;
@@ -93,7 +85,7 @@
             int tail;
             int curScope;
         public:
-            SymbolTable()
+            Lab4SymbolTable()
             {
                 tail=0;
                 curScope=-1;
@@ -122,7 +114,7 @@
                 return (unsigned long)(&scopeTables[curScope]);
             }
     };
-    SymbolTable* symbolTable=new SymbolTable();   
+    Lab4SymbolTable* lab4SymbolTable=new Lab4SymbolTable();   
     void DEBUG_FOR_LAB4(std::string s){
         std::string DEBUG_INFO = "[DEBUG LAB4]: \t" + s 
         + "\t" + to_string((long long)yylineno) 
@@ -137,15 +129,6 @@
         + "\n";
         fputs(DEBUG_INFO.c_str(), yyout);
     }
-    #else
-    #include <iostream>
-    #include <fstream>
-    #include <sstream>
-    #include <string>
-    using namespace std;
-    extern FILE *yyin; 
-    extern FILE *yyout;
-    #endif
 %}
 
 BLOCKCOMMENTBEGIN "/*"
@@ -164,15 +147,17 @@ WHITE [\t ]
 %%
 {BLOCKCOMMENTBEGIN} {
     BEGIN BLOCKCOMMENT;
-    #ifdef ONLY_FOR_LEX    
+    if(dump_tokens)
+    {
         comment="";
         offset+=2;
         commentLineno=yylineno;
         commentOffset=offset;
-    #endif
+    }  
 }
 <BLOCKCOMMENT>{BLOCKCOMMENTELEMENT} {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    {
         string yycontext(yytext);
         comment+=yycontext;
         if(!strcmp(yytext,"\n"))
@@ -184,401 +169,383 @@ WHITE [\t ]
         {
             offset+=strlen(yytext);
         }
-    #endif
+    }   
 }
 <BLOCKCOMMENT>{BLOCKCOMMENTEND} {
     BEGIN INITIAL;
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    {
         comment="BLOCKCOMMENT"+tab+comment;
         DEBUG_FOR_LAB4(comment,commentLineno,commentOffset);  
         offset+=2;
-    #endif  
+    }    
 }
-
 {LINECOMMENT} {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    { 
         string yycontext(yytext);
         yycontext=yycontext.substr(2,yycontext.length()-2);
         offset+=2;
         yycontext="LINECOMMENT"+tab+yycontext;
         DEBUG_FOR_LAB4(yycontext);
         offset+=yycontext.length();
-    #endif
+    } 
 }
 "int" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    {
         DEBUG_FOR_LAB4("INT\tint");
         offset+=strlen(yytext);
-    #else
-        return INT;
-    #endif
+    }
+    return INT; 
 }
 "float" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    {
         DEBUG_FOR_LAB4("FLOAT\tfloat");
         offset+=strlen(yytext);
-    #else
-        return FLOAT;
-    #endif
+    }
+    return FLOAT;  
 }
 "void" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    {
         DEBUG_FOR_LAB4("VOID\tvoid");
         offset+=strlen(yytext);
-    #else
-        return VOID;
-    #endif 
+    }
+    return VOID;   
 }
 "const" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    { 
         DEBUG_FOR_LAB4("CONST\tconst");
         offset+=strlen(yytext);
-    #else
-        return CONST;
-    #endif 
+    }
+    return CONST;   
 }
 "if" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("IF\tif");
         offset+=strlen(yytext);
-    #else
-        return IF;
-    #endif
+    }
+    return IF;  
 };
 "else" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("ELSE\telse");
         offset+=strlen(yytext);
-    #else
-        return ELSE;
-    #endif
+    }
+    return ELSE;   
 };
 "while" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("WHILE\twhile");
         offset+=strlen(yytext);
-    #else
-        return WHILE;
-    #endif
+    }
+    return WHILE;
 };
 "break" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("BREAK\tbreak");
         offset+=strlen(yytext);
-    #else
-        return BREAK;
-    #endif
+    }
+    return BREAK;  
 };
 "continue" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("CONTINUE\tcontinue");
         offset+=strlen(yytext);
-    #else
-        return CONTINUE;
-    #endif
+    }
+    return CONTINUE;
 };
 "return" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("RETURN\treturn");
         offset+=strlen(yytext);
-    #else
-        return RETURN;
-    #endif
+    }
+    return RETURN;    
 }
 "==" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("TRUEASSIGN\t==");
         offset+=strlen(yytext);
-    #else
-        return TRUEEQUAL;
-    #endif
+    }
+    return TRUEEQUAL;  
 }
 "!=" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("FALSEASSIGN\t!=");
         offset+=strlen(yytext);
-    #else
-        return FALSEEQUAL;
-    #endif
+    }
+    return FALSEEQUAL;   
 }
 ">=" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("GREATERASSIGN\t>=");
         offset+=strlen(yytext);
-    #else
-        return GREATEREQUAL;
-    #endif
+    }
+    return GREATEREQUAL;
 }
 "<=" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("LESSASSIGN\t<=");
         offset+=strlen(yytext);
-    #else
-        return LESSEQUAL;
-    #endif
+    }
+    return LESSEQUAL;
 }
 "=" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("ASSIGN\t=");
         offset+=strlen(yytext);
-    #else
-        return ASSIGN;
-    #endif
+    }
+    return ASSIGN;
 }
 "<" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("LESS\t<");
         offset+=strlen(yytext);
-    #else
-        return LESS;
-    #endif
+    }
+    return LESS; 
 }
 ">" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("GREATER\t>");
         offset+=strlen(yytext);
-    #else
-        return GREATER;
-    #endif
+    }
+    return GREATER;  
 }
 "+" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("ADD\t+");
         offset+=strlen(yytext);
-    #else
-        return ADD;
-    #endif
+    }
+    return ADD;
 }
 "-" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("SUB\t-");
         offset+=strlen(yytext);
-    #else
-        return SUB;
-    #endif
+    }
+    return SUB;
 }
 "*" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("MUL\t*");
         offset+=strlen(yytext);
-    #else
-        return MUL;
-    #endif
+    }
+    return MUL;
 }
 "/" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("DIV\t/");
         offset+=strlen(yytext);
-    #else
-        return DIV;
-    #endif
+    }
+    return DIV;
 }
 "%" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("MOD\t%");
         offset+=strlen(yytext);
-    #else
-        return MOD;
-    #endif
+    }
+    return MOD;
 }
 "&&" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("AND\t&");
         offset+=strlen(yytext);
-    #else
-        return AND;
-    #endif
+    }
+    return AND;
 }
 "||" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("OR\t|");
         offset+=strlen(yytext);
-    #else
-        return OR;
-    #endif
+    }
+    return OR;
 }
 "!" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("NOT\t!");
         offset+=strlen(yytext);
-    #else
-        return NOT;
-    #endif
+    }
+    return NOT;
 }
 ";" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("SEMICOLON\t;");
         offset+=strlen(yytext);
-    #else
-        return SEMICOLON;
-    #endif
+    }
+    return SEMICOLON; 
 }
 "," {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("COMMA\t,");
         offset+=strlen(yytext);
-    #else
-        return COMMA;
-    #endif
+    }
+    return COMMA;
 }
 "(" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("LPAREN\t(");
         offset+=strlen(yytext);
-    #else
-        return LPAREN;
-    #endif
+    }
+    return LPAREN;
 }
 ")" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("RPAREN\t)");
         offset+=strlen(yytext);
-    #else
+    }
     return RPAREN;
-    #endif
 }
 "{" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("LBRACE\t{");
         offset+=strlen(yytext);
-        symbolTable->scopeForward();
-    #else
-        return LBRACE;
-    #endif
+        lab4SymbolTable->scopeForward();
+    }
+    return LBRACE;
 }
 "}" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("RBRACE\t}");
         offset+=strlen(yytext);
-        symbolTable->scopeBackward();
-    #else
-        return RBRACE;
-    #endif
+        lab4SymbolTable->scopeBackward();
+    }
+    return RBRACE;
 }
 "[" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         DEBUG_FOR_LAB4("LSBRACE\t[");
         offset+=strlen(yytext);
-    #else
-        return LBRACKET;
-    #endif
+    }
+    return LBRACKET;
 }
 "]" {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         DEBUG_FOR_LAB4("RSBRACE\t]");
         offset+=strlen(yytext);
-    #else
-        return RBRACKET;
-    #endif
+    }
+    return RBRACKET;
 }
 {INTEGER} {
-    int val=std::strtol(yytext,NULL,10);
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         std::string yycontext(yytext);
         std::string str="INTEGER"+tab+yycontext;
         DEBUG_FOR_LAB4(str);
         offset+=strlen(yytext);
-    #else
-        yylval.itype=val;
-        return INTEGER;
-    #endif
+    }
+    int val=std::strtol(yytext,NULL,10);
+    yylval.itype=val;
+    return INTEGER;
 }
 {OCTAL} {
     int val=std::strtol(yytext,NULL,8);
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         std::string yycontext=std::to_string((long long)val);
         std::string str="OCTAL"+tab+yycontext;
         DEBUG_FOR_LAB4(str);
         offset+=strlen(yytext);
-    #else   
-        yylval.itype=val;
-        return INTEGER;
-    #endif
+    }   
+    yylval.itype=val;
+    return INTEGER;
 }
 {HEXADECIMAL} {
     int val=std::strtol(yytext,NULL,16);
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         std::string yycontext=std::to_string((long long)val);
         std::string str="HEXADECIMAL"+tab+yycontext;
         DEBUG_FOR_LAB4(str);
         offset+=strlen(yytext);
-    #else
-        yylval.itype=val;
-        return INTEGER;
-    #endif
+    }
+    yylval.itype=val;
+    return INTEGER;
 }
 {FFLOAT} {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {  
         std::string yycontext(yytext);
         std::string str="FFLOAT"+tab+yycontext;
         DEBUG_FOR_LAB4(str);
         offset+=strlen(yytext);
-    #else
-        float val;
-        sscanf(yytext,"%f",&val);
-        yylval.ftype=val;
-        return FFLOAT;
-    #endif
+    }
+    float val;
+    sscanf(yytext,"%f",&val);
+    yylval.ftype=val;
+    return FFLOAT; 
 }
 {HEXADECIMAL_FLOAT} {
-    #ifdef ONLY_FOR_LEX
-        DEBUG_FOR_LAB4("FLOATING", ""+std::string(yytext));
-        offset+=strlen(yytext);
-    #else
-        float val;
-        sscanf(yytext, "%f", &val);
-        yylval.ftype = double(val);
-        return FFLOAT;
-    #endif
-}
-{ID} {
-    #ifdef ONLY_FOR_LEX    
+    float val;
+    sscanf(yytext, "%f", &val);
+    if(dump_tokens) 
+    { 
         std::string yycontext(yytext);
-        symbolTable->addSymbol(ID,yycontext,yylineno,offset);
-        std::string str="ID"+tab+yycontext
-        +tab+to_string((long long)symbolTable->getCurScope());
+        std::string str="HEXADECIMAL_FLOAT"+tab+yycontext;
         DEBUG_FOR_LAB4(str);
         offset+=strlen(yytext);
-    #else
-        char *lexeme;
-        lexeme = new char[strlen(yytext) + 1];
-        strcpy(lexeme, yytext);
-        yylval.strtype = lexeme;
-        return ID;
-    #endif
+    }
+    yylval.ftype = double(val);
+    return FFLOAT;  
+}
+{ID} {
+    if(dump_tokens)  
+    { 
+        std::string yycontext(yytext);
+        lab4SymbolTable->addSymbol(IID,yycontext,yylineno,offset);
+        std::string str="ID"+tab+yycontext
+        +tab+to_string((long long)lab4SymbolTable->getCurScope());
+        DEBUG_FOR_LAB4(str);
+        offset+=strlen(yytext);
+    }
+    char *lexeme;
+    lexeme = new char[strlen(yytext) + 1];
+    strcpy(lexeme, yytext);
+    yylval.strtype = lexeme;
+    return ID; 
 }
 {EOL} {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens) 
+    { 
         yylineno++;
         offset=0;
-    #endif
+    }
 }
 {WHITE} {
-    #ifdef ONLY_FOR_LEX
+    if(dump_tokens)
+    {
         offset+=strlen(yytext);
-    #endif
+    }
 }
 %%
-
-#ifdef ONLY_FOR_LEX
-int main(int argc, char **argv){
-    if(argc != 5){
-        fprintf(stderr, "Argument Not Enough");
-        exit(EXIT_FAILURE);
-    }
-
-    if(!(yyin = fopen(argv[1], "r"))){
-        fprintf(stderr, "No such file or directory: %s", argv[1]);
-        exit(EXIT_FAILURE);
-    }
-
-    if(!(yyout = fopen(argv[3], "w"))){
-        fprintf(stderr, "No such file or directory: %s", argv[3]);
-        exit(EXIT_FAILURE);
-    }
-    yylineno=1;
-    offset=0;
-    yylex();
-    return 0;
-}
-#endif

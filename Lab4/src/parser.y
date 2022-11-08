@@ -77,7 +77,6 @@ LVal
         $$ = new Id(se);
         delete []$1;
     }
-    // 数组左值
     |  ID ArrayLists {
         SymbolEntry *se;
         se = identifiers->lookup($1);
@@ -173,7 +172,6 @@ PrimaryExp
         $$ = $2;
     }
     | INTEGER {
-        //强转
         SymbolEntry *se = new ConstantSymbolEntry(TypeSystem::intType, (int)$1);
         $$ = new Constant(se);
     }
@@ -642,8 +640,6 @@ FuncDef
         delete []$2;
     }
     ;
-
-// TODO: 数组支持
 // 数组的变量下标表示
 ArrayLists 
     :
