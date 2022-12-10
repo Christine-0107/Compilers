@@ -78,6 +78,9 @@ private:
     std::string name;
     int scope;
     Operand *addr;  // The address of the identifier.
+    //used for global definition
+    float value;
+    bool isValue=false;
     // You can add any field you need here.
 
 public:
@@ -87,9 +90,13 @@ public:
     bool isGlobal() const {return scope == GLOBAL;};
     bool isParam() const {return scope == PARAM;};
     bool isLocal() const {return scope >= LOCAL;};
+    bool isLibFunc() const;
     int getScope() const {return scope;};
     void setAddr(Operand *addr) {this->addr = addr;};
     Operand* getAddr() {return addr;};
+    void setValue(float v) {value = v; isValue=true;};
+    float getValue() {return value;};
+    void output() const;
     // You can add any function you need here.
 };
 
@@ -137,6 +144,7 @@ public:
     SymbolTable(SymbolTable *prev);
     void install(std::string name, SymbolEntry* entry);
     SymbolEntry* lookup(std::string name);
+    SymbolEntry* lookupCur(std::string name);
     SymbolTable* getPrev() {return prev;};
     int getLevel() {return level;};
     static int getLabel() {return counter++;};

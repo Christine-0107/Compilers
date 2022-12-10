@@ -8,7 +8,6 @@ class Type
 private:
     int kind;
 protected:
-    //enum {INT, VOID, FUNC, PTR};
     enum {INT, FLOAT, VOID, CONSTINT, CONSTFLOAT, INT_ARRAY, FLOAT_ARRAY, CONSTINT_ARRAY, CONSTFLOAT_ARRAY, ARRAY, FUNC, PTR};
 public:
     Type(int kind) : kind(kind) {};
@@ -24,7 +23,12 @@ public:
     bool isFloatArray() const {return kind == FLOAT_ARRAY;};
     bool isConstIntArray() const {return kind == CONSTINT_ARRAY;};
     bool isConstFloatArray() const {return kind == CONSTFLOAT_ARRAY;};
+    bool isValue() const {return kind == INT || kind == FLOAT || kind == CONSTINT || kind == CONSTFLOAT;};
     bool isArray() const {return kind == INT_ARRAY || kind == FLOAT_ARRAY || kind == CONSTINT_ARRAY || kind == CONSTFLOAT_ARRAY;};
+    bool isTypeInt() const {return kind==INT || kind==CONSTINT;};
+    bool isTypeFloat() const {return kind==FLOAT ||kind==CONSTFLOAT;};
+    bool isTypeIntArray() const {return kind==INT_ARRAY || kind == CONSTINT_ARRAY;};
+    bool isTypeFloatArray() const {return kind == FLOAT_ARRAY || kind == CONSTFLOAT_ARRAY;};
 };
 
 class IntType : public Type
@@ -94,6 +98,7 @@ public:
     std::string toStr();
 };
 
+
 class FunctionType : public Type
 {
 private:
@@ -102,8 +107,9 @@ private:
 public:
     FunctionType(Type* returnType, std::vector<Type*> paramsType) : 
     Type(Type::FUNC), returnType(returnType), paramsType(paramsType){};
-    Type* getRetType() {return returnType;};
     void setParamsType(std::vector<Type*> paramsType);
+    Type* getRetType() {return returnType;};
+    std::vector<Type*> getParamsType() {return paramsType;};
     std::string toStr();
 };
 

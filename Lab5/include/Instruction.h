@@ -28,7 +28,7 @@ protected:
     Instruction *next;
     BasicBlock *parent;
     std::vector<Operand*> operands;
-    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA};
+    enum {BINARY, COND, UNCOND, RET, LOAD, STORE, CMP, ALLOCA, CALL};
 };
 
 // meaningless instruction, used as the head node of the instruction list.
@@ -71,7 +71,7 @@ public:
     BinaryInstruction(unsigned opcode, Operand *dst, Operand *src1, Operand *src2, BasicBlock *insert_bb = nullptr);
     ~BinaryInstruction();
     void output() const;
-    enum {SUB, ADD, AND, OR};
+    enum {SUB, ADD, MUL, DIV, MOD, AND, OR};
 };
 
 class CmpInstruction : public Instruction
@@ -116,6 +116,16 @@ class RetInstruction : public Instruction
 public:
     RetInstruction(Operand *src, BasicBlock *insert_bb = nullptr);
     ~RetInstruction();
+    void output() const;
+};
+
+class CallInstruction : public Instruction
+{
+private:
+    SymbolEntry *se;
+public:
+    CallInstruction(Operand *dst, SymbolEntry *se, std::vector<Operand*> params, BasicBlock *insert_bb = nullptr);
+    ~CallInstruction();
     void output() const;
 };
 

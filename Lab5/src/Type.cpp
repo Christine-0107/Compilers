@@ -82,6 +82,11 @@ void FunctionType::setParamsType(std::vector<Type*> paramsType)
 
 std::string FunctionType::toStr()
 {
+    return returnType->toStr();
+}
+
+/*std::string FunctionType::toStr()
+{
     std::ostringstream buffer;
     buffer << returnType->toStr() ;
     buffer << "(";
@@ -89,13 +94,6 @@ std::string FunctionType::toStr()
     for(it=paramsType.begin();it!=paramsType.end();++it)
         buffer << (*it)->toStr() << " ";
     buffer << ")";
-    return buffer.str();
-}
-
-/*std::string FunctionType::toStr()
-{
-    std::ostringstream buffer;
-    buffer << returnType->toStr() << "()";
     return buffer.str();
 }*/
 

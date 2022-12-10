@@ -87,6 +87,15 @@ void BinaryInstruction::output() const
     case SUB:
         op = "sub";
         break;
+    case MUL:
+        op = "mul";
+        break;
+    case DIV:
+        op = "sdiv";
+        break;
+    case MOD:
+        op = "srem";
+        break;
     default:
         break;
     }
@@ -311,3 +320,46 @@ void StoreInstruction::output() const
 
     fprintf(yyout, "  store %s %s, %s %s, align 4\n", src_type.c_str(), src.c_str(), dst_type.c_str(), dst.c_str());
 }
+
+CallInstruction::CallInstruction(Operand* dst, SymbolEntry *se, std::vector<Operand*> params, BasicBlock* insert_bb) : Instruction(CALL, insert_bb) 
+{
+    this->se=se;
+    operands.push_back(dst);
+    dst->setDef(this);
+    for(auto param=params.begin();param!=params.end();++param)
+    {
+        operands.push_back(*param);
+        (*param)->addUse(this);
+    }
+}
+
+CallInstruction::~CallInstruction()
+{
+    operands[0]->setDef(nullptr);
+    if(operands[0]->usersNum()==0)
+        delete operands[0];
+    for(long unsigned int i=1;i<operands.size();++i)
+        operands[i]->removeUse(this);
+}
+
+void CallInstruction::output() const
+{
+    bool isVoid=((FunctionType*)(operands[0]->getType()))->isVoid();
+    if(isVoid)
+    {
+        fprintf(yyout, "  ");
+    }
+    else
+    {
+        fprintf(yyout, "  %s = ", operands[0]->toStr().c_str());
+        
+    }
+    fprintf(yyout, "call %s %s(", ((FunctionType*)se->getType())->getRetType()->toStr().c_str(), se->toStr().c_str());
+    for(long unsigned int i=1;i<operands.size();++i)
+    {
+        if(i>=2)
+            fprintf(yyout, ", ");
+        fprintf(yyout, "%s %s", operands[i]->getType()->toStr().c_str(), operands[i]->toStr().c_str());
+    }
+    fprintf(yyout, ")\n");
+}  

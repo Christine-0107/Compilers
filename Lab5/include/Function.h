@@ -18,6 +18,7 @@ class Function
 
 private:
     std::vector<BasicBlock *> block_list;
+    std::vector<Operand*> params;
     SymbolEntry *sym_ptr;
     BasicBlock *entry;
     Unit *parent;
@@ -27,6 +28,7 @@ public:
     ~Function();
     void insertBlock(BasicBlock *bb) { block_list.push_back(bb); };
     BasicBlock *getEntry() { return entry; };
+    void insertParam(Operand *pa) {params.push_back(pa);}
     void remove(BasicBlock *bb);
     void output() const;
     std::vector<BasicBlock *> &getBlockList(){return block_list;};

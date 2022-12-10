@@ -1,6 +1,8 @@
 #include "SymbolTable.h"
+#include "Type.h"
 #include <iostream>
 #include <sstream>
+extern FILE* yyout;
 
 SymbolEntry::SymbolEntry(Type *type, int kind) 
 {
@@ -31,6 +33,35 @@ std::string IdentifierSymbolEntry::toStr()
     return "@" + name;
 }
 
+bool IdentifierSymbolEntry::isLibFunc() const
+{
+    if(name=="getint"||name=="putint"||name=="putch")
+        return true;
+    return false;
+}
+
+void IdentifierSymbolEntry::output() const
+{
+    if(type->isFunc())
+    {
+        fprintf(yyout, "declare %s @%s(", ((FunctionType*)type)->getRetType()->toStr().c_str(),name.c_str());
+        auto paramsType=((FunctionType*)type)->getParamsType();
+        auto paramType=paramsType.begin();
+        fprintf(yyout,"%s", (*paramType)->toStr().c_str());
+        ++paramType;
+        for(;paramType!=paramsType.end();++paramType)
+        {
+            fprintf(yyout,",%s", (*paramType)->toStr().c_str());
+        }
+        fprintf(yyout, ")\n");
+    }
+    else
+    {
+        //assert(scope==GLOBAL);
+        fprintf(yyout, "@%s = dso_local global %s %d\n", name.c_str(), type->toStr().c_str(), (int)value);
+    }
+}
+
 TemporarySymbolEntry::TemporarySymbolEntry(Type *type, int label) : SymbolEntry(type, SymbolEntry::TEMPORARY)
 {
     this->label = label;
@@ -47,6 +78,17 @@ SymbolTable::SymbolTable()
 {
     prev = nullptr;
     level = 0;
+    Type* func_getint = new FunctionType(TypeSystem::intType, {});
+    SymbolEntry *se_getint=new IdentifierSymbolEntry(func_getint,"getint",0);
+    this->install("getint",se_getint);
+
+    Type* func_putint = new FunctionType(TypeSystem::voidType, {TypeSystem::intType});
+    SymbolEntry *se_putint=new IdentifierSymbolEntry(func_putint,"putint",0);
+    this->install("putint",se_putint);  
+
+    Type* func_putch = new FunctionType(TypeSystem::voidType, {TypeSystem::intType});
+    SymbolEntry *se_putch=new IdentifierSymbolEntry(func_putch,"putch",0);
+    this->install("putch",se_putch);  
 }
 
 SymbolTable::SymbolTable(SymbolTable *prev)
@@ -71,7 +113,7 @@ SymbolTable::SymbolTable(SymbolTable *prev)
 SymbolEntry* SymbolTable::lookup(std::string name)
 {
     // Todo
-    std::map<std::string, SymbolEntry*>::iterator it=symbolTable.find(name);
+    auto it=symbolTable.find(name);
     if(it!=symbolTable.end())
     {
         return it->second;
@@ -84,6 +126,20 @@ SymbolEntry* SymbolTable::lookup(std::string name)
     {
         return nullptr;
     }
+}
+
+SymbolEntry* SymbolTable::lookupCur(std::string name)
+{
+    // Todo
+    auto it=symbolTable.find(name);
+    if(it!=symbolTable.end())
+    {
+        return it->second;
+    }
+    else{
+        return nullptr;
+    } 
+    
 }
 
 // install the entry into current symbol table.

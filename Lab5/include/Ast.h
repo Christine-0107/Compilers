@@ -2,6 +2,7 @@
 #define __AST_H__
 
 #include <fstream>
+#include <stack>
 #include "Operand.h"
 
 class SymbolEntry;
@@ -10,6 +11,9 @@ class Function;
 class BasicBlock;
 class Instruction;
 class IRBuilder;
+class WhileStmt;
+
+static std::stack<WhileStmt*> nestWhile;
 
 class Node
 {
@@ -51,10 +55,22 @@ private:
     int op;
     ExprNode *expr1, *expr2;
 public:
-    //enum {ADD, SUB, AND, OR, LESS, GREATER};
     enum {ADD, SUB, MUL, DIV, MOD, AND, OR, 
     LESS, GREATER, LESSEQUAL, GREATEREQUAL, TRUEEQUAL, FALSEEQUAL};
     BinaryExpr(SymbolEntry *se, int op, ExprNode*expr1, ExprNode*expr2) : ExprNode(se), op(op), expr1(expr1), expr2(expr2){dst = new Operand(se);};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class UnaryExpr : public ExprNode
+{
+private:
+    int op;
+    ExprNode *expr;
+public:
+    enum {UPLUS, UMINUS, NOT};
+    UnaryExpr(SymbolEntry *se, int op, ExprNode*expr) : ExprNode(se), op(op), expr(expr) {dst = new Operand(se);};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -73,15 +89,15 @@ class Id : public ExprNode
 {
 public:
     Id(SymbolEntry *se) : ExprNode(se){SymbolEntry *temp = new TemporarySymbolEntry(se->getType(), SymbolTable::getLabel()); dst = new Operand(temp);};
+    Type* getType();
+    SymbolEntry* getSymbolEntry() {return symbolEntry;}
     void output(int level);
     void typeCheck();
     void genCode();
 };
 
 class StmtNode : public Node
-{
-
-};
+{};
 
 class CompoundStmt : public StmtNode
 {
@@ -105,12 +121,82 @@ public:
     void genCode();
 };
 
-class DeclStmt : public StmtNode
+class ExpStmt : public StmtNode
+{
+private:
+    ExprNode *expr;
+public:
+    ExpStmt(ExprNode *expr) : expr(expr) {};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class VarDeclNode : public StmtNode
 {
 private:
     Id *id;
+    ExprNode *expr;
 public:
-    DeclStmt(Id *id) : id(id){};
+    VarDeclNode(Id *id,ExprNode *expr) : id(id),expr(expr){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class VarDeclSeqNode : public StmtNode
+{
+private:
+    std::vector<VarDeclNode*> varDeclList;
+public:
+    VarDeclSeqNode() {};
+    void insertVarDecl(VarDeclNode *varDecl);
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class VarDeclStmt : public StmtNode
+{
+private:
+    VarDeclSeqNode *varDeclSeqNode;
+public:
+    VarDeclStmt(VarDeclSeqNode *varDeclSeqNode) :varDeclSeqNode(varDeclSeqNode){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class ConstDeclNode : public StmtNode
+{
+private:
+    Id *id;
+    ExprNode *expr;
+public:
+    ConstDeclNode(Id *id,ExprNode *expr) : id(id),expr(expr){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class ConstDeclSeqNode : public StmtNode
+{
+private:
+    std::vector<ConstDeclNode*> constDeclList;
+public:
+    ConstDeclSeqNode() {};
+    void insertConstDecl(ConstDeclNode *constDecl);
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class ConstDeclStmt : public StmtNode
+{
+private:
+    ConstDeclSeqNode *constDeclSeqNode;
+public:
+    ConstDeclStmt(ConstDeclSeqNode *constDeclSeqNode) :constDeclSeqNode(constDeclSeqNode){};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -141,6 +227,42 @@ public:
     void genCode();
 };
 
+class WhileStmt : public StmtNode
+{
+private:
+    ExprNode *cond;
+    StmtNode *whileStmt;
+    BasicBlock *cond_bb;
+    BasicBlock *stmt_bb;
+    BasicBlock *end_bb;
+public:
+    WhileStmt(ExprNode *cond, StmtNode *whileStmt) : cond(cond), whileStmt(whileStmt) {};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+    BasicBlock* getCondBB(){return this->cond_bb;}
+    BasicBlock* getStmtBB(){return this->stmt_bb;}
+    BasicBlock* getEndBB(){return this->end_bb;}
+};
+
+class BreakStmt : public StmtNode
+{
+public:
+    BreakStmt(){};
+    void output(int level);
+    void typeCheck();
+    void genCode();    
+};
+
+class ContinueStmt : public StmtNode
+{
+public:
+    ContinueStmt(){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
 class ReturnStmt : public StmtNode
 {
 private:
@@ -164,13 +286,76 @@ public:
     void genCode();
 };
 
+class FuncParamNode : public StmtNode
+{
+private:
+    Id *id;
+public:
+    FuncParamNode(Id *id) : id(id) {};
+    Id* getId() {return id;};
+    Type* getType();
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class FuncParamSeqNode : public StmtNode
+{
+private:
+    std::vector<FuncParamNode*> paramList;
+public:
+    FuncParamSeqNode() {};
+    void insertParam(FuncParamNode *param);
+    std::vector<Type*> getParamsType();
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
 class FunctionDef : public StmtNode
 {
 private:
     SymbolEntry *se;
+    FuncParamSeqNode *paramList;
     StmtNode *stmt;
 public:
-    FunctionDef(SymbolEntry *se, StmtNode *stmt) : se(se), stmt(stmt){};
+    FunctionDef(SymbolEntry *se, FuncParamSeqNode *paramList, StmtNode *stmt) : se(se), paramList(paramList), stmt(stmt){};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class CallParamSeqNode : public StmtNode
+{
+private:
+    std::vector<ExprNode*> paramList;
+    std::vector<Operand*> operandList;
+public:
+    CallParamSeqNode() {};
+    void insertParam(ExprNode *param);
+    std::vector<Operand*> getParams() {return operandList;}
+    std::vector<ExprNode*> getParamList() {return paramList;}
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class CallFunc : public ExprNode
+{
+private:
+    SymbolEntry *funcSe;
+    CallParamSeqNode *callParamSeqNode;
+public:
+    CallFunc(SymbolEntry *dstSe,SymbolEntry *funcSe,CallParamSeqNode *callParamSeqNode): ExprNode(dstSe), funcSe(funcSe), callParamSeqNode(callParamSeqNode) {dst = new Operand(dstSe);};
+    void output(int level);
+    void typeCheck();
+    void genCode();
+};
+
+class NullStmt : public StmtNode
+{
+public:
+    NullStmt() {};
     void output(int level);
     void typeCheck();
     void genCode();
@@ -187,5 +372,6 @@ public:
     void typeCheck();
     void genCode(Unit *unit);
 };
+
 
 #endif
