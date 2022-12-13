@@ -96,6 +96,7 @@ public:
     Operand* getAddr() {return addr;};
     void setValue(float v) {value = v; isValue=true;};
     float getValue() {return value;};
+    std::string getName() {return name;};
     void output() const;
     // You can add any function you need here.
 };

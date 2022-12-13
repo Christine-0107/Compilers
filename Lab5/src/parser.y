@@ -29,7 +29,8 @@
 %token INT VOID
 %token LPAREN RPAREN LBRACE RBRACE SEMICOLON COMMA
 %token ASSIGN LESS GREATER GREATEREQUAL LESSEQUAL TRUEEQUAL FALSEEQUAL
-%token ADD SUB MUL DIV MOD OR AND NOT
+%token ADD SUB MUL DIV MOD 
+%token OR AND NOT
 %token RETURN
 
 %nterm <stmttype> Stmts Stmt AssignStmt BlockStmt ExpStmt IfStmt WhileStmt BreakStmt ContinueStmt ReturnStmt FuncParam FuncParamList FuncDef CallParamList DeclStmt VarDeclStmt VarDeclList VarDecl ConstDeclStmt ConstDeclList ConstDecl 
@@ -176,7 +177,8 @@ UnaryExp
     {
         SymbolEntry *se;
         se = identifiers->lookup($1);
-        if(se == nullptr){
+        if(se == nullptr)
+        {
             fprintf(stderr, "function \"%s\" is undefined\n", (char*)$1);
             delete [](char*)$1;
             assert(se != nullptr);
@@ -187,19 +189,20 @@ UnaryExp
     |
     ADD UnaryExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
-        $$ = new UnaryExpr(se, UnaryExpr::UPLUS, $2);
+        //SymbolEntry *se = new TemporarySymbolEntry($2->getOperand()->getType(), SymbolTable::getLabel());
+        //$$ = new UnaryExpr(se, UnaryExpr::UPLUS, $2);
+        $$ = $2;
     }
     | 
     SUB UnaryExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry($2->getOperand()->getType(), SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::UMINUS, $2);
     }
     |
     NOT UnaryExp
     {
-        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::intType, SymbolTable::getLabel());
+        SymbolEntry *se = new TemporarySymbolEntry(TypeSystem::boolType, SymbolTable::getLabel());
         $$ = new UnaryExpr(se, UnaryExpr::NOT, $2);
     }
     ;

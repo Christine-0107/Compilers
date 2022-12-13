@@ -363,3 +363,44 @@ void CallInstruction::output() const
     }
     fprintf(yyout, ")\n");
 }  
+
+XorInstruction::XorInstruction(Operand *dst, Operand *src, BasicBlock *insert_bb) : Instruction(XOR, insert_bb)
+{
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->setDef(this);
+    src->addUse(this);
+}
+
+void XorInstruction::output() const {
+    fprintf(yyout, "  %s = xor %s %s, true\n", operands[0]->toStr().c_str(),operands[1]->getType()->toStr().c_str(), operands[1]->toStr().c_str());
+}
+
+XorInstruction:: ~XorInstruction()
+{
+    operands[0]->setDef(nullptr);
+    if(operands[0]->usersNum()==0)
+        delete operands[0];
+    operands[1]->removeUse(this);
+}
+
+ZextInstruction::ZextInstruction(Operand *dst, Operand *src, BasicBlock *insert_bb) : Instruction(ZEXT, insert_bb)
+{
+    operands.push_back(dst);
+    operands.push_back(src);
+    dst->setDef(this);
+    src->addUse(this);
+}
+
+void ZextInstruction::output() const 
+{
+    fprintf(yyout, "  %s = zext %s %s to i32\n", operands[0]->toStr().c_str(),operands[1]->getType()->toStr().c_str(), operands[1]->toStr().c_str());
+}
+
+ZextInstruction:: ~ZextInstruction()
+{
+    operands[0]->setDef(nullptr);
+    if(operands[0]->usersNum()==0)
+        delete operands[0];
+    operands[1]->removeUse(this);
+}

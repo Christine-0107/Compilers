@@ -7,6 +7,11 @@ void Unit::insertFunc(Function *f)
 
 void Unit::insertId(SymbolEntry *id)
 {
+    for(auto i=id_list.begin();i!=id_list.end();++i)
+    {
+        if(((IdentifierSymbolEntry*)id)->getName()==((IdentifierSymbolEntry*)(*i))->getName())
+            return;
+    }
     id_list.push_back(id);
 }
 
@@ -25,6 +30,8 @@ void Unit::output() const
 
 Unit::~Unit()
 {
+    for(auto &id : id_list)
+        delete id;
     for(auto &func:func_list)
         delete func;
 }

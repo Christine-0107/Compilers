@@ -47,11 +47,14 @@ void IdentifierSymbolEntry::output() const
         fprintf(yyout, "declare %s @%s(", ((FunctionType*)type)->getRetType()->toStr().c_str(),name.c_str());
         auto paramsType=((FunctionType*)type)->getParamsType();
         auto paramType=paramsType.begin();
-        fprintf(yyout,"%s", (*paramType)->toStr().c_str());
-        ++paramType;
-        for(;paramType!=paramsType.end();++paramType)
+        if(paramType!=paramsType.end())
         {
-            fprintf(yyout,",%s", (*paramType)->toStr().c_str());
+            fprintf(yyout,"%s", (*paramType)->toStr().c_str());
+            ++paramType;
+            for(;paramType!=paramsType.end();++paramType)
+            {
+                fprintf(yyout,",%s", (*paramType)->toStr().c_str());
+            }
         }
         fprintf(yyout, ")\n");
     }

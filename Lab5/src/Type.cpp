@@ -2,7 +2,7 @@
 #include <sstream>
 
 IntType TypeSystem::commonInt = IntType(32);
-IntType TypeSystem::commonBool = IntType(1);
+BoolType TypeSystem::commonBool = BoolType(1);
 VoidType TypeSystem::commonVoid = VoidType();
 FloatType TypeSystem::commonFloat = FloatType(4);
 ConstIntType TypeSystem::commonConstInt=ConstIntType();
@@ -25,17 +25,26 @@ Type* TypeSystem::constFloatArrayType = &commonConstFloatArray;
 
 std::string IntType::toStr()
 {
-    return "int";
+    std::ostringstream buffer;
+    buffer << "i" << size;
+    return buffer.str();
 }
 
-std::string FloatType::toStr()
+std::string BoolType::toStr()
 {
-    return "float";
+    std::ostringstream buffer;
+    buffer << "i" << size;
+    return buffer.str();
 }
 
 std::string VoidType::toStr()
 {
     return "void";
+}
+
+std::string FloatType::toStr()
+{
+    return "float";
 }
 
 std::string ConstIntType::toStr()
@@ -68,13 +77,6 @@ std::string ConstFloatArrayType::toStr()
     return "const float array";
 }
 
-/*std::string IntType::toStr()
-{
-    std::ostringstream buffer;
-    buffer << "i" << size;
-    return buffer.str();
-}*/
-
 void FunctionType::setParamsType(std::vector<Type*> paramsType)
 {
     this->paramsType=paramsType;
@@ -84,18 +86,6 @@ std::string FunctionType::toStr()
 {
     return returnType->toStr();
 }
-
-/*std::string FunctionType::toStr()
-{
-    std::ostringstream buffer;
-    buffer << returnType->toStr() ;
-    buffer << "(";
-    std::vector<Type*>::iterator it;
-    for(it=paramsType.begin();it!=paramsType.end();++it)
-        buffer << (*it)->toStr() << " ";
-    buffer << ")";
-    return buffer.str();
-}*/
 
 std::string PointerType::toStr()
 {
